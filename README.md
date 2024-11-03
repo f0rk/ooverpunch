@@ -1,7 +1,7 @@
 ooverpunch
 ==========
 
-Python wrapper around Rust (overpunch)[https://crates.io/crates/overpunch].
+Python wrapper around Rust [overpunch](https://crates.io/crates/overpunch).
 
 Usage:
 
