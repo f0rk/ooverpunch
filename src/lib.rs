@@ -1,44 +1,40 @@
 use overpunch::{
     convert_from_signed_format as convert_from_signed_format_rs,
     convert_to_signed_format as convert_to_signed_format_rs, extract as extract_rs,
-    format as format_rs, OverpunchError as _OverpunchError,
+    format as format_rs,
 };
 use pyo3::exceptions::PyValueError;
 use pyo3::prelude::*;
 use rust_decimal::Decimal;
 
-struct OverpunchError(_OverpunchError);
-
-impl From<OverpunchError> for PyErr {
-    fn from(err: OverpunchError) -> PyErr {
-        PyValueError::new_err(format!("{}", err.0))
-    }
-}
-
-impl From<_OverpunchError> for OverpunchError {
-    fn from(other: _OverpunchError) -> Self {
-        Self(other)
-    }
+#[pyfunction]
+fn convert_from_signed_format(value: &str, field_format: &str) -> PyResult<Decimal> {
+    convert_from_signed_format_rs(value, field_format).ok_or_else(|| {
+        PyValueError::new_err(format!(
+            "received None, but expected value when converting {:?} from signed format {:?}",
+            value, field_format
+        ))
+    })
 }
 
 #[pyfunction]
-fn convert_from_signed_format(value: &str, format: &str) -> Result<Decimal, OverpunchError> {
-    Ok(convert_from_signed_format_rs(value, format).unwrap())
+fn convert_to_signed_format(value: Decimal, field_format: &str) -> PyResult<String> {
+    convert_to_signed_format_rs(value, field_format).ok_or_else(|| {
+        PyValueError::new_err(format!(
+            "received None, but expected value when converting {:?} to signed format {:?}",
+            value, field_format
+        ))
+    })
 }
 
 #[pyfunction]
-fn convert_to_signed_format(value: Decimal, format: &str) -> Result<String, OverpunchError> {
-    Ok(convert_to_signed_format_rs(value, format).unwrap())
+fn extract(raw: &str, decimals: usize) -> PyResult<Decimal> {
+    extract_rs(raw, decimals).map_err(|e| PyValueError::new_err(e.to_string()))
 }
 
 #[pyfunction]
-fn extract(value: &str, decimals: usize) -> Result<Decimal, OverpunchError> {
-    Ok(extract_rs(value, decimals)?)
-}
-
-#[pyfunction]
-fn format(value: Decimal, decimals: usize) -> Result<String, OverpunchError> {
-    Ok(format_rs(value, decimals)?)
+fn format(value: Decimal, decimals: usize) -> PyResult<String> {
+    format_rs(value, decimals).map_err(|e| PyValueError::new_err(e.to_string()))
 }
 
 #[pymodule]
